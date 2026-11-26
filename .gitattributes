@@ -1,0 +1,3 @@
+# impeccable launchers: the sh script fails with CRLF and the .cmd file fails with LF.
+.claude/skills/impeccable/** text=auto eol=lf
+*.cmd text eol=crlf
