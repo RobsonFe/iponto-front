@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Agent skills contain example class names that must not reach the CSS bundle. */
+@source not "../../.claude";
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
