@@ -1,37 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# iPonto Front-End
 
-## Getting Started
+Aplicação web para gestão de funcionários e controle de ponto, feita com Next.js 16.4 (App Router), React 19.3 e TypeScript. Consome a `iponto-api` (NestJS).
 
-First, run the development server:
+**Estado atual:** a camada de servidor de empresas e funcionários (types e services) está pronta. As telas ainda não foram criadas: a página inicial é a do template.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Como executar
+
+Requisitos: Node 20.9 ou superior e a `iponto-api` em execução.
+
+1. Instale as dependências com `npm install`.
+2. Crie o arquivo `.env.local` na raiz com a URL da API:
+
+   ```env
+   API_URL=http://localhost:8080/api/v1
+   ```
+
+3. Inicie com `npm run dev` e abra `http://localhost:3000`.
+
+## Variáveis de ambiente
+
+| Variável | Obrigatória | Descrição |
+|----------|-------------|-----------|
+| `API_URL` | Sim | URL base da `iponto-api`, com o prefixo `/api/v1`. A porta é a `PORT` do `.env` da API (padrão `8080`). Lida somente no servidor: não use o prefixo `NEXT_PUBLIC_`. |
+
+Os arquivos `.env*` não são versionados.
+
+## Comandos
+
+| Tarefa | Comando |
+|--------|---------|
+| Testes | `npm test` |
+| Um arquivo de teste | `npx jest <arquivo>` |
+| Tipos | `npx next typegen` e depois `npx tsc --noEmit` |
+| Lint | `npm run lint` |
+| Build | `npm run build` |
+
+Os testes simulam a API: não precisam dela em execução.
+
+## Estrutura
+
+```text
+src/
+├── app/                      rotas
+├── services/
+│   ├── api/                  cliente HTTP e utilitários de recurso
+│   ├── company-service.ts
+│   └── employee-service.ts
+├── types/                    contratos da API e type guards
+├── utils/                    funções puras
+└── __fixtures__/             dados fictícios dos testes
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Como usar os services
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Os services rodam somente no servidor (Server Components, Server Actions e Route Handlers).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```ts
+import { countCompanies, listCompanies } from '@/services/company-service';
 
-## Learn More
+const [companies, total] = await Promise.all([listCompanies({ page: 1, limit: 10 }), countCompanies()]);
+```
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# iponto-front
+- Com `cacheComponents` ativo, o componente que lê esses dados fica dentro de `<Suspense>`.
+- `findCompany` e `findEmployee` retornam `null` quando o registro não existe.
+- As demais falhas de chamada lançam `ApiError`, com o status HTTP: `503` quando a API não responde ou a resposta é interrompida, e `502` quando a resposta foge do contrato. A mensagem é técnica e não deve ser exibida ao usuário.
+- Sem `API_URL`, os services lançam um `Error` comum.
+- Os retornos trazem somente os campos do contrato: campos extras da API são descartados.
+- A busca e a listagem de funcionários não retornam a empresa.
+- Envie `page` e `limit` juntos. Hoje a API aceita `page` até 50 ([iponto-api#15](https://github.com/RobsonFe/iponto-api/issues/15)).
+- Empresas e funcionários têm dados pessoais: não use cache compartilhado nem os registre em log.

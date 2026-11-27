@@ -2,7 +2,7 @@
 
 Web app for employee management and time tracking. Next.js 16.4 (App Router, Turbopack), React 19.3, TypeScript 5 (strict), Tailwind CSS 4 and ESLint 9. Node 20.9 or newer. The backend is `iponto-api` (NestJS). No authentication yet.
 
-The project is new: it still has the initial template page. The structure below is the standard to follow as code is added.
+The project is new: the UI is still the initial template page, and the server layer for companies and employees (types and services) is in place. The structure below is the standard to follow as code is added.
 
 @AGENTS.md
 
@@ -19,18 +19,20 @@ npm install
 npm run dev
 ```
 
-The app runs on `http://localhost:3000`. The API (`../iponto-api`) listens on `http://localhost:8080/api/v1`, with Swagger at `/doc`.
+The app runs on `http://localhost:3000`. The API (`../iponto-api`) listens on `http://localhost:8080/api/v1` by default (its `.env` `PORT` wins), with Swagger at `/doc`. Set `API_URL` to that base in `.env.local`.
 
 | Task | Command |
 |------|---------|
 | Generate route types | `npx next typegen` |
 | Type check | `npx tsc --noEmit` (after `next typegen`) |
 | Lint check | `npm run lint` · `npx eslint <files>` |
+| One spec | `npx jest <file>` |
+| One test | `npx jest <file> -t "<name>"` |
 | Build | `npm run build` |
 | Run the build | `npm run start` |
 | Bundle analysis | `npx next analyze` |
 
-Not installed yet: **Jest, React Testing Library, Playwright and Prettier**. Setup: [setup.md](.claude/skills/nextjs-test/setup.md). After installing, run only the tests tied to the change; the full suite only when asked.
+Run only the tests tied to the change; the full suite only when asked. Jest runs in the `node` environment (only server code exists) and `next/jest` already stubs `server-only`. Not installed yet: **React Testing Library, jsdom, Playwright and Prettier**. Setup: [setup.md](.claude/skills/nextjs-test/setup.md).
 
 ## Cautions
 
@@ -58,7 +60,7 @@ src/
 public/           static files
 ```
 
-Only `src/app/` exists today; create the other folders when they get their first file. Import alias: `@/*` → `src/*`.
+`src/app/`, `src/services/`, `src/types/` and `src/utils/` exist today (test data in `src/__fixtures__/`); create the other folders when they get their first file. Import alias: `@/*` → `src/*`.
 
 - **Server Components first**; `'use client'` only at the interactive leaf.
 - **Backend only through the proxy:** services on the server; `rewrites` or Route Handlers for the browser.
