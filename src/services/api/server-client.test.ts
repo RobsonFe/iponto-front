@@ -121,6 +121,32 @@ describe('apiRequest', () => {
       });
     });
 
+    it('libera o corpo de uma resposta de erro antes de lançar o ApiError', async () => {
+      const cancel = jest.fn();
+      mockFetch().mockResolvedValue(new Response(new ReadableStream({ cancel }), { status: 500 }));
+
+      await expect(apiRequest('/company/list')).rejects.toMatchObject({ status: 500 });
+
+      expect(cancel).toHaveBeenCalledTimes(1);
+    });
+
+    it('mantém o status HTTP quando a liberação do corpo falha, registrando a causa', async () => {
+      const cause = new DOMException('The operation timed out.', 'TimeoutError');
+      const body = new ReadableStream({ cancel: () => Promise.reject(cause) });
+      mockFetch().mockResolvedValue(new Response(body, { status: 409 }));
+
+      const error: unknown = await apiRequest('/company/save').catch((reason) => reason);
+
+      expect(error).toBeInstanceOf(ApiError);
+      expect(error).toMatchObject({ status: 409, cause });
+    });
+
+    it('lança o status HTTP quando a resposta de erro não tem corpo', async () => {
+      mockFetch().mockResolvedValue(new Response(null, { status: 404 }));
+
+      await expect(apiRequest('/company/list')).rejects.toMatchObject({ name: 'ApiError', status: 404 });
+    });
+
     it.each([
       ['falha de rede', new TypeError('fetch failed')],
       ['tempo esgotado', new DOMException('The operation timed out.', 'TimeoutError')],

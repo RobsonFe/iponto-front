@@ -85,7 +85,9 @@ export const apiRequest = async (path: string, init: RequestInit = {}): Promise<
   }
 
   if (!response.ok) {
-    throw new ApiError(response.status, failure);
+    // An unread body keeps the connection busy. A failure to release it must not replace the HTTP status.
+    const releaseFailure = await response.body?.cancel().catch((reason: unknown) => reason);
+    throw new ApiError(response.status, failure, { cause: releaseFailure });
   }
 
   return response.status === 204 ? undefined : readJson(response, failure);
